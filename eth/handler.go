@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"sync"
 	"sync/atomic"
@@ -325,8 +326,6 @@ func (pm *ProtocolManager) handleMsg(p *peer) error {
 	}
 	defer msg.Discard()
 
-	log.Info(fmt.Sprintf("Protocol Version %v", p.version))
-
 	// Handle the message depending on its contents
 	switch {
 	case msg.Code == StatusMsg:
@@ -410,6 +409,7 @@ func (pm *ProtocolManager) handleMsg(p *peer) error {
 				query.Origin.Number += query.Skip + 1
 			}
 		}
+
 		return p.SendBlockHeaders(headers)
 
 	case msg.Code == BlockHeadersMsg:
@@ -506,6 +506,11 @@ func (pm *ProtocolManager) handleMsg(p *peer) error {
 			transactions[i] = body.Transactions
 			uncles[i] = body.Uncles
 		}
+
+		// BlockSim catch times
+		var now = msg.ReceivedAt.UnixNano() / int64(time.Millisecond)
+		log.Info(fmt.Sprintf("BlockBodiesMsg %v ReceivedAt %v from %v", request, now, p.id))
+
 		// Filter out any explicitly requested bodies, deliver the rest to the downloader
 		filter := len(transactions) > 0 || len(uncles) > 0
 		if filter {
@@ -611,10 +616,10 @@ func (pm *ProtocolManager) handleMsg(p *peer) error {
 
 		// Mark the hashes as present at the remote node
 		for _, block := range announces {
-			var now = msg.ReceivedAt.UnixNano() / int64(time.Millisecond)
-
 			// BlockSim catch times
-			log.Info(fmt.Sprintf("NewBlockHashesMsg #%v ReceivedAt %v", block.Number, now))
+			var now = msg.ReceivedAt.UnixNano() / int64(time.Millisecond)
+			log.Info(fmt.Sprintf("NewBlockHashesMsg #%v ReceivedAt %v from %v", block.Number, now, p.id))
+
 			p.MarkBlock(block.Hash)
 		}
 		// Schedule all the unknown hashes for retrieval
@@ -697,7 +702,7 @@ func (pm *ProtocolManager) BroadcastBlock(block *types.Block, propagate bool) {
 	peers := pm.peers.PeersWithoutBlock(hash)
 
 	// If propagation is requested, send to a subset of the peer
-	/*if propagate {
+	if propagate {
 		// Calculate the TD of the block (it's not imported yet, so block.Td is not valid)
 		var td *big.Int
 		if parent := pm.blockchain.GetBlock(block.ParentHash(), block.NumberU64()-1); parent != nil {
@@ -718,7 +723,7 @@ func (pm *ProtocolManager) BroadcastBlock(block *types.Block, propagate bool) {
 		log.Info(fmt.Sprintf("BroadcastBlock SendNewBlock #%v SentAt %v", block.Number(), now))
 
 		return
-	}*/
+	}
 	// Otherwise if the block is indeed in out own chain, announce it
 	if pm.blockchain.HasBlock(hash, block.NumberU64()) {
 		for _, peer := range peers {

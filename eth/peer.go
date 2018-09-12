@@ -27,6 +27,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/p2p"
 	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/ethereum/go-ethereum/log"
 	"gopkg.in/fatih/set.v0"
 )
 
@@ -166,18 +167,27 @@ func (p *peer) SendBlockHeaders(headers []*types.Header) error {
 
 // SendBlockBodies sends a batch of block contents to the remote peer.
 func (p *peer) SendBlockBodies(bodies []*blockBody) error {
+	// BlockSim catch times
+	var now = time.Now().Unix()
+	log.Info(fmt.Sprintf("SendBlockBodies at %v from %v", now, p.id))
 	return p2p.Send(p.rw, BlockBodiesMsg, blockBodiesData(bodies))
 }
 
 // SendBlockBodiesRLP sends a batch of block contents to the remote peer from
 // an already RLP encoded format.
 func (p *peer) SendBlockBodiesRLP(bodies []rlp.RawValue) error {
+	// BlockSim catch times
+	var now = time.Now().Unix()
+	log.Info(fmt.Sprintf("SendBlockBodiesRLP at %v from %v", now, p.id))
 	return p2p.Send(p.rw, BlockBodiesMsg, bodies)
 }
 
 // SendNodeDataRLP sends a batch of arbitrary internal data, corresponding to the
 // hashes requested.
 func (p *peer) SendNodeData(data [][]byte) error {
+	// BlockSim catch times
+	var now = time.Now().Unix()
+	log.Info(fmt.Sprintf("SendNodeData at %v from %v", now, p.id))
 	return p2p.Send(p.rw, NodeDataMsg, data)
 }
 

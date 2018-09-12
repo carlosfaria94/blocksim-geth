@@ -20,6 +20,7 @@ package fetcher
 import (
 	"errors"
 	"math/rand"
+	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -556,6 +557,11 @@ func (f *Fetcher) loop() {
 			}
 			// Schedule the retrieved blocks for ordered import
 			for _, block := range blocks {
+
+				// BlockSim: Catch the time the block is sent
+				var now = time.Now().Unix()
+				log.Info(fmt.Sprintf("Final block #%v received at %v", block.Number(), now))
+				
 				if announce := f.completing[block.Hash()]; announce != nil {
 					f.enqueue(announce.origin, block)
 				}
