@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"os"
 
-	storage "github.com/Azure/azure-storage-go"
+	storage "github.com/Azure/azure-storage-blob-go"
 )
 
 // AzureBlobstoreConfig is an authentication and configuration struct containing
